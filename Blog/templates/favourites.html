@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Favourite {% endblock title %}
+
+{% block content %}
+<div class="row">
+    {% for blog in fav %}
+    <div class="col-lg-12">
+      <div class="blog-post">
+        <div class="blog-thumb">
+          <img src="{{blog.banner.url}}" alt="">
+        </div>
+        <div class="down-content">
+          <span>{{blog.category}}</span>
+          <a href="{% url 'blog_details' blog.slug %}"><h4>{{blog.title}}</h4></a>
+          <ul class="post-info">
+            <li><a href="#">{{blog.user.username}}</a></li>
+            <li><a href="#">{{blog.created_date}}</a></li>
+            <li><a href="#">{{blog.blog_comment.all.count}} Comments</a></li>
+          </ul>
+          <p>{{blog.description|truncatewords:30}}</p>
+          <div class="post-options">
+            <div class="row">
+              <div class="col-6">
+                <ul class="post-tags">
+                  <li><i class="fa fa-tags"></i></li>
+                  {% for tag in blog.tags.all %}
+                  <li><a href="#">{{tag.title}}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="col-6">
+                <ul class="post-share">
+                  {% comment %} <li><i class="fa fa-share-alt"></i></li> {% endcomment %}
+                  <li><a href="#" class="btn btn-outline-primary">Add to Favourite</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="col-lg-12">
+      <div class="main-button">
+        <a href="{% url "blogs" %}">View All Posts</a>
+      </div>
+    </div>
+</div>
+{% endblock content %}
