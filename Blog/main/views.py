@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Blog, Tag, Category, Comment, Reply
+from .models import Blog, Tag, Category, Review, Reply
 from django.core.paginator import PageNotAnInteger, EmptyPage, Paginator
 from user_profile.models import User
 from django.utils.text import slugify
@@ -84,15 +84,21 @@ def blog_details(request, slug):
     category = Category.objects.get(id=blog.category.id)
     related_blogs = category.category_blogs.all()
     tags = Tag.objects.order_by('-created_date')[:5]
+    favourite_by=request.user in blog.favourite.all()
+    
     
     if request.method == "POST" and request.user.is_authenticated:
         form = TextForm(request.POST)
         if form.is_valid():
-            Comment.objects.create(
+            rating = form.cleaned_data.get('rating')
+            comment = form.cleaned_data.get('text')
+            Review.objects.create(
                 user=request.user,
                 blog=blog,
-                text=form.cleaned_data.get('text')
+                comment=comment,
+                rating=rating,
             )
+            
             return redirect('blog_details', slug=slug)
 
     context = {
@@ -100,8 +106,38 @@ def blog_details(request, slug):
         "related_blogs": related_blogs,
         "tags": tags,
         "form":form,
+        "favourite_by":favourite_by
     }
     return render(request, 'blog_details.html', context)
+
+
+def favourite_blog(request, id):
+    blog = get_object_or_404(Blog, id=id)
+
+    if request.user.is_authenticated:
+        # Using Favorite model (for separate favorites list)
+        if blog.favourite.filter(id=request.user.id).exists():
+            # Already favorited, so do nothing (or display a message)
+            pass
+        else:
+            blog.favourite.add(request.user)
+    else:
+        # User not authenticated, consider redirecting to login
+        return redirect('login')
+
+    return redirect('blog_details', slug=blog.slug)
+
+def favourites_list(request):
+    if request.user.is_authenticated:
+        favourite_blogs = request.user.favourite_blogs.all()
+    else:
+        favourite_blogs = []  # Empty list for non-authenticated users
+
+    context = {
+        'favourite_blogs': favourite_blogs
+    }
+    return render(request, 'favourites.html', context)
+
 
 @login_required(login_url='login')
 def add_reply(request, blog_id, comment_id):
@@ -109,14 +145,13 @@ def add_reply(request, blog_id, comment_id):
     if request.method == "POST":
         form = TextForm(request.POST)
         if form.is_valid():
-            comment = get_object_or_404(Comment, id=comment_id)
+            comment = get_object_or_404(Review, id=comment_id)
             Reply.objects.create(
                 user=request.user,
                 comment=comment,
                 text=form.cleaned_data.get('text')
             )
     return redirect('blog_details', slug=blog.slug)
-
 
 def search_blogs(request):
     search_key = request.GET.get('search', None)
@@ -269,4 +304,5 @@ def update_blog(request, slug):
         "blog": blog
     }
     return render(request, 'update_blog.html', context)
+
     

@@ -12,4 +12,6 @@ urlpatterns = [
     path('my_blogs/', my_blogs, name='my_blogs'),
     path('add_blog/', add_blog, name='add_blog'),
     path('update_blog/<str:slug>/', update_blog, name='update_blog'),
+    path('favourite_blog/<int:id>/', favourite_blog, name='favourite_blog'),
+    path('favourite/', favourites_list, name='favourite'),
 ]

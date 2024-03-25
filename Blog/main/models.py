@@ -2,6 +2,7 @@ from django.db import models
 from user_profile.models import User
 from django.utils.text import slugify
 from .slug import generate_unique_slug
+from ckeditor.fields import RichTextField
 # Create your models here.
 
 class Category(models.Model):
@@ -36,8 +37,9 @@ class Blog(models.Model):
     title=models.CharField(max_length=250)
     slug=models.SlugField(null=True, blank=True)
     banner=models.ImageField(upload_to='blog_banners')
-    description=models.TextField()
+    description=RichTextField()
     created_date=models.DateField(auto_now_add=True)
+    favourite=models.ManyToManyField(User, related_name='favourite_blogs', blank=True)
     
     def __str__(self) -> str:
         return self.title
@@ -52,19 +54,22 @@ class Blog(models.Model):
             self.slug=generate_unique_slug(self,self.title)
             super().save(*args,**kwargs)
 
-class Comment(models.Model):
-    user=models.ForeignKey(User,related_name='user_comment',on_delete=models.CASCADE)
-    blog=models.ForeignKey(Blog,related_name='blog_comment',on_delete=models.CASCADE)
-    text=models.TextField()
+
+class Review(models.Model):
+    user=models.ForeignKey(User,related_name='user_review',on_delete=models.CASCADE)
+    blog=models.ForeignKey(Blog,related_name='blog_review',on_delete=models.CASCADE)
+    comment=models.TextField(max_length=250)
+    rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)],null=True)
     created_date=models.DateField(auto_now_add=True)
     def __str__(self) -> str:
-        return self.text
-    
+        return self.comment
+
 class Reply(models.Model):
     user=models.ForeignKey(User,related_name='user_replies',on_delete=models.CASCADE)
-    comment=models.ForeignKey(Comment,related_name='comment_replies',on_delete=models.CASCADE)
+    comment=models.ForeignKey(Review,related_name='comment_replies',on_delete=models.CASCADE)
     text=models.TextField()
     created_date=models.DateField(auto_now_add=True)
     def __str__(self) -> str:
         return self.text
 
+    
